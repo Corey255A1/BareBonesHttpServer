@@ -14,7 +14,7 @@ namespace SimpleHttpServer
         private void Message(string msg) { MessageCallback?.Invoke(this, msg); }
         TcpListener _server;
         private int _port;
-        private ConcurrentBag<HttpClientHandler> _clients = new ConcurrentBag<HttpClientHandler>();
+        private ConcurrentDictionary<EndPoint,HttpClientHandler> _clients = new ConcurrentDictionary<EndPoint, HttpClientHandler>();
         private bool _running = false;
         public HttpServer(int port)
         {
@@ -35,7 +35,7 @@ namespace SimpleHttpServer
                     {
                         var httpc = new HttpClientHandler(client);
                         httpc.HttpRequestReceived += HttpRequestReceived;
-                        _clients.Add(httpc);
+                        _clients[client.Client.RemoteEndPoint]=httpc;
                     }
                 }
             }
@@ -46,12 +46,21 @@ namespace SimpleHttpServer
         }
         public void Stop()
         {
-            foreach (var client in _clients)
+            _running = false;
+            foreach (var client in _clients.Values)
             {
                 client.Disconnect();
-            }
-            _running = false;
+            }            
             _server.Stop();
+        }
+
+        public void ClientDisconnected(EndPoint p, HttpClientHandler client)
+        {
+            if(_running)
+            {
+                HttpClientHandler tmp;
+                _clients.TryRemove(p, out tmp);
+            }
         }
 
         //private void ClientRequest(HttpClientHandler client, HttpRequest req)

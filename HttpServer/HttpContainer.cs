@@ -27,7 +27,7 @@ namespace SimpleHttpServer
 
     public class HttpResponse: HttpContainer
     {
-        private string _data;
+        private byte[] _data;
         private string _code;
         private string _protocol;
         private string _respmessage;
@@ -43,14 +43,18 @@ namespace SimpleHttpServer
         {
             this._properties.Add(field, data);
         }
-        public void SetData(string data)
+        public void SetData(byte[] bytes)
         {
-            if(!_properties.ContainsKey("Content-Length"))
+            if (!_properties.ContainsKey("Content-Length"))
             {
                 this._properties.Add("Content-Length", "");
             }
-            this._properties["Content-Length"] = (data.Length+2).ToString();
-            this._data = data;
+            this._properties["Content-Length"] = bytes.Length.ToString();
+            this._data = bytes;
+        }
+        public void SetData(string data)
+        {
+            this.SetData(System.Text.Encoding.UTF8.GetBytes(data));
         }
         protected override bool SplitHeader(string header)
         {
@@ -68,7 +72,17 @@ namespace SimpleHttpServer
         public override string ToString()
         {
             string header = String.Format("{0} {1} {2}\r\n", _protocol, _code, _respmessage);
-            return header + base.ToString() + string.Format("\r\n{0}\r\n", _data);
+            return header + base.ToString() + string.Format("\r\n{0}", System.Text.Encoding.UTF8.GetString(_data));
+        }
+
+        public override byte[] GetBytes()
+        {
+            string header = String.Format("{0} {1} {2}\r\n", _protocol, _code, _respmessage);
+            byte[] hbytes = Encoding.UTF8.GetBytes(header + base.ToString() +"\r\n");
+            byte[] totalbytes = new byte[hbytes.Length + _data.Length];
+            Array.Copy(hbytes, totalbytes, hbytes.Length);
+            Array.Copy(_data, 0, totalbytes, hbytes.Length, _data.Length);
+            return totalbytes;
         }
 
     }
@@ -125,6 +139,16 @@ namespace SimpleHttpServer
             }
             return msg.ToString();
 
+        }
+
+        public virtual byte[] GetBytes()
+        {
+            StringBuilder msg = new StringBuilder(256);
+            foreach (var k in _properties.Keys)
+            {
+                msg.AppendFormat("{0}: {1}\r\n", k, _properties[k]);
+            }
+            return Encoding.UTF8.GetBytes(msg.ToString());
         }
 
         protected virtual bool SplitHeader(string header)

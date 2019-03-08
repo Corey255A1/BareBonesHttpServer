@@ -29,5 +29,30 @@ namespace SimpleHttpServer
 
             }
         }
+        public static bool IsFileBinary(string filename)
+        {
+            var dotoffset = filename.LastIndexOf('.');
+            if (dotoffset == -1)
+            {
+                return true;
+            }
+            switch (filename.Substring(dotoffset).ToLower())
+            {
+                case ".css":
+                case ".js":
+                case ".json":
+                case ".html":
+                case ".htm":
+                    return false;
+
+                case ".ico":
+                case ".jpg":
+                case ".png":
+                case ".gif":
+                default:
+                    return true;
+
+            }
+        }
     }
 }

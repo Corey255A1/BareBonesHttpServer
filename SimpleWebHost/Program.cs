@@ -51,7 +51,15 @@ namespace SimpleWebHost
                     {
                         string mime = HttpTools.GetFileMimeType(uri);
                         Console.WriteLine(mime);
-                        string data = File.ReadAllText(requestedfile.LocalPath);
+                        byte[] data;
+                        if (HttpTools.IsFileBinary(uri))
+                        {
+                            data = File.ReadAllBytes(requestedfile.LocalPath);
+                        }
+                        else
+                        {
+                            data = System.Text.Encoding.UTF8.GetBytes(File.ReadAllText(requestedfile.LocalPath));
+                        }
                         resp = new HttpResponse("HTTP/1.1", "200", "OK");
                         resp.AddProperty("Date", DateTime.Now.ToShortDateString());
                         resp.AddProperty("Server", "WunderVision");
@@ -69,7 +77,7 @@ namespace SimpleWebHost
                 resp.AddProperty("Content-Type", "text/html;charset=UTF-8");
                 resp.SetData("SORRY CAN'T DO WHAT YOU WANT ME TO");
             }
-            client.Send(resp.ToString());
+            client.Send(resp.GetBytes());
         }
     }
 }

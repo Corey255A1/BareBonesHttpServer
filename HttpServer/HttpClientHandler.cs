@@ -6,10 +6,12 @@ using System.Net;
 namespace SimpleHttpServer
 {
     public delegate void HttpRequestDataCallback(HttpClientHandler client, HttpRequest packet);
+    public delegate void HttpClientHandlerEvent(EndPoint end, HttpClientHandler client);
     public class HttpClientHandler
     {
 
         public HttpRequestDataCallback HttpRequestReceived;
+        public HttpClientHandlerEvent ClientDisconnected;
         public string ClientInfo
         {
             get { return _client.Client.RemoteEndPoint.ToString(); }
@@ -28,8 +30,11 @@ namespace SimpleHttpServer
         }
         public void Send(string text)
         {
-            byte[] b = System.Text.Encoding.UTF8.GetBytes(text);
-            _stream.Write(b, 0, b.Length);
+            this.Send(System.Text.Encoding.UTF8.GetBytes(text));
+        }
+        public void Send(byte[] bytes)
+        {
+            _stream.Write(bytes, 0, bytes.Length);
         }
         public async void BeginReadData()
         {
@@ -66,6 +71,7 @@ namespace SimpleHttpServer
                 Console.WriteLine("Client Read Aborted");
             }
             Console.WriteLine("DONE");
+            ClientDisconnected?.Invoke(_client.Client.RemoteEndPoint,this);
         }
         public void Disconnect()
         {
