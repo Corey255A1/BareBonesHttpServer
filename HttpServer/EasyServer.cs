@@ -84,7 +84,7 @@ namespace SimpleHttpServer
                         resp.AddProperty("Content-Type", handlerdata.Mime);
                         resp.SetData(handlerdata.Data);
                     }
-                    else if (this.Root != "")
+                    else if (this.Root != null && this.Root != "")
                     {
                         Uri requestedfile = new Uri(Root + uri);
                         if (File.Exists(requestedfile.LocalPath))
