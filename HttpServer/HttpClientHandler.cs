@@ -21,12 +21,17 @@ namespace SimpleHttpServer
         public HttpClientHandlerEvent ClientDisconnected;
 
         private bool WebSocketUpgrade = false;
+        private TcpClient _client;
+        private NetworkStream _stream;
+
         public string ClientInfo
         {
             get { return _client.Client.RemoteEndPoint.ToString(); }
         }
-        TcpClient _client;
-        NetworkStream _stream;
+        public TcpClient Client
+        {
+            get { return _client;  }
+        }
 
         const int BUFFERSIZE = 1024;
         byte[] _buffer = new byte[BUFFERSIZE];
@@ -79,9 +84,17 @@ namespace SimpleHttpServer
         }
         public void Send(byte[] bytes)
         {
-            _stream.Write(bytes, 0, bytes.Length);
+            this._stream.Write(bytes, 0, bytes.Length);
         }
-        
+        public void Send(WebSocketFrame ws)
+        {
+            this.Send(ws.GetBytes());
+        }
+        public void Send(HttpResponse hr)
+        {
+            this.Send(hr.GetBytes());
+        }
+
         public void Close()
         {
             if (_client.Connected)

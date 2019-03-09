@@ -5,11 +5,21 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-
+using System.Security.Cryptography;
 namespace SimpleHttpServer
 {
     public static class HttpTools
     {
+
+        public static string ComputeWebSocketKeyHash(string websocketkey)
+        {
+            //Magic String
+            string concat = websocketkey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+            var s = SHA1.Create();
+            byte[] hash = s.ComputeHash(System.Text.Encoding.UTF8.GetBytes(concat));
+            return Convert.ToBase64String(hash);
+        }
+
         public static string GetFileMimeType(string filename)
         {
             var dotoffset = filename.LastIndexOf('.');

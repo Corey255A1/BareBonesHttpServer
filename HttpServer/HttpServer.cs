@@ -9,13 +9,14 @@ using System.Collections.Concurrent;
 namespace SimpleHttpServer
 {
     public delegate void HttpServerMessageCallback(HttpServer o, string msg);
-    public delegate bool HttpClientConnected(TcpClient t);
+    public delegate bool HttpClientStatusUpdate(TcpClient t);
     public class HttpServer
     {
         public HttpServerMessageCallback MessageCallback;
         public HttpRequestDataCallback HttpRequestReceived;
         public HttpWebSocketDataCallback HttpWebSocketDataReceived;
-        public HttpClientConnected HttpNewClientConnected;
+        public HttpClientStatusUpdate HttpNewClientConnected;
+        public HttpClientStatusUpdate HttpClientDisconnected;
         private void Message(string msg) { MessageCallback?.Invoke(this, msg); }
         TcpListener _server;
         private int _port;
@@ -41,7 +42,9 @@ namespace SimpleHttpServer
                         var httpc = new HttpClientHandler(client);
                         httpc.HttpRequestReceived += HttpRequestReceived;
                         httpc.WebSocketDataReceived += HttpWebSocketDataReceived;
+                        httpc.ClientDisconnected += ClientDisconnected;
                         _clients[client.Client.RemoteEndPoint]=httpc;
+                        Message(string.Format($"{httpc.ClientInfo} has connected"));
                     }
                 }
             }
@@ -58,6 +61,7 @@ namespace SimpleHttpServer
                 client.Close();
             }            
             _server.Stop();
+            Message("Server Stopped");
         }
 
         public void ClientDisconnected(EndPoint p, HttpClientHandler client)
@@ -65,7 +69,11 @@ namespace SimpleHttpServer
             if(_running)
             {
                 HttpClientHandler tmp;
-                _clients.TryRemove(p, out tmp);
+                if (_clients.TryRemove(p, out tmp))
+                {
+                    HttpClientDisconnected?.Invoke(tmp.Client);
+                    Message(string.Format($"{tmp.ClientInfo} has disconnected"));
+                }
             }
         }
 
