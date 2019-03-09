@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Corey Wunderlich - 2019
+// www.wundervisionenvisionthefuture.com
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
