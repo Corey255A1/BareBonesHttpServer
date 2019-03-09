@@ -90,15 +90,7 @@ namespace SimpleHttpServer
                         if (File.Exists(requestedfile.LocalPath))
                         {
                             string mime = HttpTools.GetFileMimeType(uri);
-                            byte[] data;
-                            if (HttpTools.IsFileBinary(uri))
-                            {
-                                data = File.ReadAllBytes(requestedfile.LocalPath);
-                            }
-                            else
-                            {
-                                data = System.Text.Encoding.UTF8.GetBytes(File.ReadAllText(requestedfile.LocalPath));
-                            }
+                            byte[] data = File.ReadAllBytes(requestedfile.LocalPath);
                             resp = new HttpResponse("HTTP/1.1", "200", "OK");
                             resp.AddProperty("Date", DateTime.Now.ToShortDateString());
                             resp.AddProperty("Server", "WunderVision");
