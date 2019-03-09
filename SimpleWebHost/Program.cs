@@ -36,7 +36,7 @@ namespace SimpleWebHost
             Server.Stop();
         }
 
-        static void Status(HttpServer s, string msg)
+        private static void Status(HttpServer s, string msg)
         {
             Console.WriteLine(msg);
 
