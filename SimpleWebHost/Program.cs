@@ -1,4 +1,9 @@
-﻿using System;
+﻿// Corey Wunderlich - 2019
+// www.wundervisionenvisionthefuture.com
+//
+// This program is serving as the example working project that is used to test
+// and build various parts of the http server functionality
+using System;
 using SimpleHttpServer;
 using System.IO;
 using System.Security.Cryptography;

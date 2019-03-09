@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Corey Wunderlich - 2019
+// www.wundervisionenvisionthefuture.com
+//
+// Encapsulates the handling of connecting clients
+using System;
 using System.Net.Sockets;
 using System.Net;
 using System.Collections.Concurrent;

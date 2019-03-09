@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Corey Wunderlich - 2019
+// www.wundervisionenvisionthefuture.com
+//
+// Classes to handle Request and Response Http Packets
+using System;
 using System.Collections.Generic;
 using System.Text;
 

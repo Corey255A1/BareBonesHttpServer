@@ -1,4 +1,9 @@
-﻿using System;
+﻿// Corey Wunderlich - 2019
+// www.wundervisionenvisionthefuture.com
+//
+// Handles receiving data from a client and notifying the server of the
+// data that is available. Decodes regular Http and Websocktes
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Net.Sockets;

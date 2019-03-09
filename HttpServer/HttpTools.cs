@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Corey Wunderlich - 2019
+// www.wundervisionenvisionthefuture.com
+//
+// Static Functions to help with various http things
+using System;
 using System.Collections.Generic;
 using System.Text;
 
