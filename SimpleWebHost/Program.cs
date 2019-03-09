@@ -13,8 +13,8 @@ namespace SimpleWebHost
     {
         static HttpServer Server;
         static string Site = "I'M A BLANK SITE";
-        static Uri Root = new Uri(@"D:\Documents\CodeProjects\Corey255A1.github.io");
-        //static Uri Root = new Uri(@"D:\Documents\CodeProjects\BareBonesHttpServer\ExampleSites\WebSocket");
+        //static Uri Root = new Uri(@"D:\Documents\CodeProjects\Corey255A1.github.io");
+        static Uri Root = new Uri(@"D:\Documents\CodeProjects\BareBonesHttpServer\ExampleSites\WebSocket");
         
         static void Main(string[] args)
         {

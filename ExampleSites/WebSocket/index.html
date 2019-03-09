@@ -6,7 +6,9 @@
 <body>
     <div id="status">Connecting...</div>
     <script>
-        var ws = new WebSocket("ws://localhost/socket");
+        //Use the server name of the computer you want to connect to..
+        //And the port, if it is not 80
+        var ws = new WebSocket("ws://compy:11111/socket");
         ws.onopen = function(e)
         {
             document.getElementById("status").innerText = "Connection Established"
