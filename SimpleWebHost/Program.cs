@@ -1,19 +1,28 @@
 ﻿using System;
 using SimpleHttpServer;
 using System.IO;
+using System.Security.Cryptography;
 namespace SimpleWebHost
 {
     class Program
     {
         static HttpServer Server;
         static string Site = "I'M A BLANK SITE";
-        static Uri Root = new Uri(@"D:\Documents\CodeProjects\Corey255A1.github.io");
+        //static Uri Root = new Uri(@"D:\Documents\CodeProjects\Corey255A1.github.io");
+        static Uri Root = new Uri(@"D:\Documents\CodeProjects\BareBonesHttpServer\ExampleSites\WebSocket");
+        
         static void Main(string[] args)
         {
+            //string concat = "dGhlIHNhbXBsZSBub25jZQ==" + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+            //var s = SHA1.Create();
+            //byte[] hash = s.ComputeHash(System.Text.Encoding.UTF8.GetBytes(concat));
+            //Console.WriteLine(Convert.ToBase64String(hash)); //s3pPLMBiTxaQ9kYGzzhZRbK+xOo= - Demo From Mozilla
+
             Server = new HttpServer(80);
             Site = File.ReadAllText(Root.LocalPath + "\\index.html", System.Text.Encoding.UTF8);
             Server.MessageCallback += Status;
             Server.HttpRequestReceived += ClientRequest;
+            Server.HttpWebSocketDataReceived += WebSocketData;
             Server.StartListening();
             Console.WriteLine("Listening...");
 
@@ -28,10 +37,15 @@ namespace SimpleWebHost
 
         }
 
+        private static void WebSocketData(HttpClientHandler client, WebSocketFrame data)
+        {
+            Console.WriteLine(System.Text.Encoding.UTF8.GetString(data.Payload));
+        }
+
         private static void ClientRequest(HttpClientHandler client, HttpRequest req)
         {
             HttpResponse resp = null;
-            Console.WriteLine(req.ToString());
+            //Console.WriteLine(req.ToString());
             if (req["Request"] == "GET")
             {
                 string uri = req["URI"];
@@ -45,27 +59,48 @@ namespace SimpleWebHost
                 }
                 else
                 {
-                    Uri requestedfile = new Uri(Root + uri);
-                    Console.WriteLine(requestedfile.LocalPath);
-                    if(File.Exists(requestedfile.LocalPath))
+
+                    if(req.ContainsKey("Sec-WebSocket-Key"))
                     {
-                        string mime = HttpTools.GetFileMimeType(uri);
-                        Console.WriteLine(mime);
-                        byte[] data;
-                        if (HttpTools.IsFileBinary(uri))
-                        {
-                            data = File.ReadAllBytes(requestedfile.LocalPath);
-                        }
-                        else
-                        {
-                            data = System.Text.Encoding.UTF8.GetBytes(File.ReadAllText(requestedfile.LocalPath));
-                        }
-                        resp = new HttpResponse("HTTP/1.1", "200", "OK");
-                        resp.AddProperty("Date", DateTime.Now.ToShortDateString());
-                        resp.AddProperty("Server", "WunderVision");
-                        resp.AddProperty("Content-Type", mime);
-                        resp.SetData(data);
+                        resp = new HttpResponse("HTTP/1.1", "101", "Switching Protocols");
+                        resp.AddProperty("Upgrade", "websocket");
+                        resp.AddProperty("Connection", "Upgrade");
+                        //Console.WriteLine(req["Sec-WebSocket-Key"]);
+                        string concat = req["Sec-WebSocket-Key"]+"258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+                        var s = SHA1.Create();
+                        byte[] hash = s.ComputeHash(System.Text.Encoding.UTF8.GetBytes(concat));
+                        resp.AddProperty("Sec-WebSocket-Accept", Convert.ToBase64String(hash));
+                        //Console.WriteLine(req.ToString());
+                        //Console.WriteLine(resp.ToString());
+                        client.UpgradeToWebsocket();
                     }
+                    else
+                    {
+                        Uri requestedfile = new Uri(Root + uri);
+                        //Console.WriteLine(requestedfile.LocalPath);
+                        if (File.Exists(requestedfile.LocalPath))
+                        {
+                            string mime = HttpTools.GetFileMimeType(uri);
+                            //Console.WriteLine(mime);
+                            byte[] data;
+                            if (HttpTools.IsFileBinary(uri))
+                            {
+                                data = File.ReadAllBytes(requestedfile.LocalPath);
+                            }
+                            else
+                            {
+                                data = System.Text.Encoding.UTF8.GetBytes(File.ReadAllText(requestedfile.LocalPath));
+                            }
+                            resp = new HttpResponse("HTTP/1.1", "200", "OK");
+                            resp.AddProperty("Date", DateTime.Now.ToShortDateString());
+                            resp.AddProperty("Server", "WunderVision");
+                            resp.AddProperty("Content-Type", mime);
+                            resp.SetData(data);
+                        }
+
+                    }
+
+                    
                     
                 }
             }

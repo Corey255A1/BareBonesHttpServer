@@ -10,6 +10,7 @@ namespace SimpleHttpServer
     {
         public HttpServerMessageCallback MessageCallback;
         public HttpRequestDataCallback HttpRequestReceived;
+        public HttpWebSocketDataCallback HttpWebSocketDataReceived;
         public HttpClientConnected HttpNewClientConnected;
         private void Message(string msg) { MessageCallback?.Invoke(this, msg); }
         TcpListener _server;
@@ -35,6 +36,7 @@ namespace SimpleHttpServer
                     {
                         var httpc = new HttpClientHandler(client);
                         httpc.HttpRequestReceived += HttpRequestReceived;
+                        httpc.WebSocketDataReceived += HttpWebSocketDataReceived;
                         _clients[client.Client.RemoteEndPoint]=httpc;
                     }
                 }
@@ -49,7 +51,7 @@ namespace SimpleHttpServer
             _running = false;
             foreach (var client in _clients.Values)
             {
-                client.Disconnect();
+                client.Close();
             }            
             _server.Stop();
         }

@@ -1,0 +1,23 @@
+<html>
+
+<head>
+    <title>Web Socket Test</title>
+</head>
+<body>
+    <div id="status">Connecting...</div>
+    <script>
+        var ws = new WebSocket("ws://localhost/socket");
+        ws.onopen = function(e)
+        {
+            document.getElementById("status").innerText = "Connection Established"
+            //ws.send("This is a test");
+        }
+        function sendmsg()
+        {
+            ws.send("Sending from a button");
+        }
+    </script>
+    <input type="button" value="Send" onclick="sendmsg()"></input>
+</body>
+
+</html>

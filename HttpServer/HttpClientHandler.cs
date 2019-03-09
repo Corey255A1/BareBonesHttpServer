@@ -6,12 +6,16 @@ using System.Net;
 namespace SimpleHttpServer
 {
     public delegate void HttpRequestDataCallback(HttpClientHandler client, HttpRequest packet);
+    public delegate void HttpWebSocketDataCallback(HttpClientHandler client, WebSocketFrame packet);
     public delegate void HttpClientHandlerEvent(EndPoint end, HttpClientHandler client);
     public class HttpClientHandler
     {
 
         public HttpRequestDataCallback HttpRequestReceived;
+        public HttpWebSocketDataCallback WebSocketDataReceived;
         public HttpClientHandlerEvent ClientDisconnected;
+
+        private bool WebSocketUpgrade = false;
         public string ClientInfo
         {
             get { return _client.Client.RemoteEndPoint.ToString(); }
@@ -28,6 +32,42 @@ namespace SimpleHttpServer
             _stream = c.GetStream();
             BeginReadData();
         }
+
+        private async void BeginReadData()
+        {
+            try
+            {
+                int bytesread = await _stream.ReadAsync(_buffer, 0, BUFFERSIZE);
+                while (bytesread > 0)
+                {
+                    
+                    if (!this.WebSocketUpgrade)
+                    {
+                        string msg = System.Text.Encoding.UTF8.GetString(_buffer);
+                        HttpRequest h = new HttpRequest(msg);
+                        HttpRequestReceived?.Invoke(this, h);
+                    }
+                    else
+                    {
+                        //Not handling Multiple Frames worth of data...
+                        WebSocketFrame frame = new WebSocketFrame(_buffer);
+                        WebSocketDataReceived?.Invoke(this, frame);
+                        //Console.WriteLine(Encoding.UTF8.GetString(frame.Payload));
+                    }
+                    bytesread = await _stream.ReadAsync(_buffer, 0, BUFFERSIZE);
+                }
+            }
+            catch
+            {
+                Console.WriteLine("Client Read Aborted");
+            }
+            Console.WriteLine("DONE");
+            ClientDisconnected?.Invoke(_client.Client.RemoteEndPoint, this);
+        }
+        public void UpgradeToWebsocket()
+        {
+            this.WebSocketUpgrade = true;
+        }
         public void Send(string text)
         {
             this.Send(System.Text.Encoding.UTF8.GetBytes(text));
@@ -36,46 +76,13 @@ namespace SimpleHttpServer
         {
             _stream.Write(bytes, 0, bytes.Length);
         }
-        public async void BeginReadData()
+        
+        public void Close()
         {
-            try
+            if (_client.Connected)
             {
-                int bytesread = await _stream.ReadAsync(_buffer, 0, BUFFERSIZE);
-                while (bytesread > 0)
-                {
-                    string msg = System.Text.Encoding.UTF8.GetString(_buffer);
-                    //Console.WriteLine(msg);
-                    HttpRequest h = new HttpRequest(msg);
-                    HttpRequestReceived?.Invoke(this, h);
-                    //HttpResponse resp = new HttpResponse("HTTP/1.1","200","OK");
-                    //resp.AddProperty("Date", DateTime.Now.ToShortDateString());
-                    //resp.AddProperty("Server", "WunderVision");
-                    //resp.AddProperty("Content-Type", "text/html;charset=UTF-8");
-                    //resp.SetData("THIS IS A RESPONSE FROM A TOTALLY LEGIT SERVER");
-
-                    //string respstr = req.ToString();
-                    //    //"HTTP/1.1 200 OK\n" +
-                    //    //"Date: 7:34\n" +
-                    //    //"Server: WunderVision\n" +
-                    //    //"Content-Type: text/html;charset=UTF-8\n" +
-                    //    //"Content-Length: 5\n" +
-                    //    //"\n" +
-                    //    //"Hello";
-                    //_stream.Write(System.Text.Encoding.UTF8.GetBytes(respstr), 0, resp.Length);
-                    bytesread = await _stream.ReadAsync(_buffer, 0, BUFFERSIZE);
-                    
-                }
+                _client.Close();
             }
-            catch
-            {
-                Console.WriteLine("Client Read Aborted");
-            }
-            Console.WriteLine("DONE");
-            ClientDisconnected?.Invoke(_client.Client.RemoteEndPoint,this);
-        }
-        public void Disconnect()
-        {
-            _client.Close();
         }
     }
 }

@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace SimpleHttpServer
-{
+{    
+
     public class HttpRequest: HttpContainer
     {
         public HttpRequest(string msg): base(msg)
@@ -72,16 +73,21 @@ namespace SimpleHttpServer
         public override string ToString()
         {
             string header = String.Format("{0} {1} {2}\r\n", _protocol, _code, _respmessage);
-            return header + base.ToString() + string.Format("\r\n{0}", System.Text.Encoding.UTF8.GetString(_data));
+            return header + base.ToString() + string.Format("\r\n{0}", _data!=null?System.Text.Encoding.UTF8.GetString(_data):"");
         }
 
         public override byte[] GetBytes()
         {
             string header = String.Format("{0} {1} {2}\r\n", _protocol, _code, _respmessage);
             byte[] hbytes = Encoding.UTF8.GetBytes(header + base.ToString() +"\r\n");
-            byte[] totalbytes = new byte[hbytes.Length + _data.Length];
-            Array.Copy(hbytes, totalbytes, hbytes.Length);
-            Array.Copy(_data, 0, totalbytes, hbytes.Length, _data.Length);
+            byte[] totalbytes = hbytes;
+            if (_data != null)
+            {
+                totalbytes = new byte[hbytes.Length + _data.Length];
+                Array.Copy(hbytes, totalbytes, hbytes.Length);
+                Array.Copy(_data, 0, totalbytes, hbytes.Length, _data.Length);
+            }
+
             return totalbytes;
         }
 
@@ -116,6 +122,11 @@ namespace SimpleHttpServer
             {
                 Console.WriteLine(e.ToString());
             }
+        }
+
+        public bool ContainsKey(string key)
+        {
+            return this._properties.ContainsKey(key);
         }
 
         public string this[string obj]
