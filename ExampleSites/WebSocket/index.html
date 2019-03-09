@@ -12,6 +12,9 @@
             document.getElementById("status").innerText = "Connection Established"
             //ws.send("This is a test");
         }
+        ws.onmessage = function(e){
+            console.log(e.data);
+        }
         function sendmsg()
         {
             ws.send("Sending from a button");

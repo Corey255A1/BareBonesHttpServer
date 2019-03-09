@@ -45,6 +45,10 @@ namespace SimpleWebHost
         private static void WebSocketData(HttpClientHandler client, WebSocketFrame data)
         {
             Console.WriteLine(System.Text.Encoding.UTF8.GetString(data.Payload));
+
+            WebSocketFrame response = new WebSocketFrame("This is a server response");
+            client.Send(response.GetBytes());
+
         }
 
         private static void ClientRequest(HttpClientHandler client, HttpRequest req)
