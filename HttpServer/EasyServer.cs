@@ -21,9 +21,17 @@ namespace SimpleHttpServer
         public HttpClientHandlerEvent WebSocketClientUpgraded;
         public HttpWebSocketDataCallback WebSocketDataReceived;
 
+        private Uri _root;
         public string Root
         {
-            get; set;
+            get
+            {
+                return _root != null ? _root.LocalPath : "";
+            }
+            set
+            {
+                _root = new Uri(value);
+            }
         }
         public EasyServer(int port)
         {
@@ -92,6 +100,10 @@ namespace SimpleHttpServer
                     else if (this.Root != null && this.Root != "")
                     {
                         Uri requestedfile = new Uri(Root + uri);
+                        //true if the caller has the required permissions and path contains the name of an existing file; otherwise, 
+                        //false.This method also returns false if path is null, an invalid path, or a zero - length string.
+                        //If the caller does not have sufficient permissions to read the specified file, 
+                        //no exception is thrown and the method returns false regardless of the existence of path
                         if (File.Exists(requestedfile.LocalPath))
                         {
                             string mime = HttpTools.GetFileMimeType(uri);

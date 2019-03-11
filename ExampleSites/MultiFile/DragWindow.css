@@ -1,0 +1,21 @@
+div.moveable {
+    position: absolute;
+    min-width: 400px;
+    min-height: 400px;
+    top: 0;
+    left: 0;
+    border: 3px solid red;
+    background-color: white;
+}
+div.titlebar {
+    padding: 10 10 10 10;
+    background-color: powderblue;
+    text-align: center;
+    font-weight: bold;
+    color: black;
+}
+
+div.titlebar-focused {
+    background: blue;
+    color: white;
+}
