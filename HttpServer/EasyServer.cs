@@ -17,6 +17,10 @@ namespace SimpleHttpServer
         private HttpServer _server;
         private int _port;
         private Dictionary<string, Func<HttpRequestHandler>> _responseHandlers = new Dictionary<string, Func<HttpRequestHandler>>();
+
+        public HttpClientHandlerEvent WebSocketClientUpgraded;
+        public HttpWebSocketDataCallback WebSocketDataReceived;
+
         public string Root
         {
             get; set;
@@ -53,10 +57,10 @@ namespace SimpleHttpServer
 
         private void WebSocketData(HttpClientHandler client, WebSocketFrame data)
         {
-            Console.WriteLine(System.Text.Encoding.UTF8.GetString(data.Payload));
-
-            WebSocketFrame response = new WebSocketFrame("This is a WebSocket server response!");
-            client.Send(response);
+            WebSocketDataReceived?.Invoke(client, data);
+            //Console.WriteLine(System.Text.Encoding.UTF8.GetString(data.Payload));
+            //WebSocketFrame response = new WebSocketFrame("This is a WebSocket server response!");
+            //client.Send(response);
         }
 
         private void ClientRequest(HttpClientHandler client, HttpRequest req)
@@ -71,6 +75,7 @@ namespace SimpleHttpServer
                     resp.AddProperty("Connection", "Upgrade");
                     resp.AddProperty("Sec-WebSocket-Accept", HttpTools.ComputeWebSocketKeyHash(req["Sec-WebSocket-Key"]));
                     client.UpgradeToWebsocket();
+                    WebSocketClientUpgraded?.Invoke(client.RemoteEndPoint, client);
                 }
                 else
                 {

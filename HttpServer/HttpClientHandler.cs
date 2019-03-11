@@ -13,6 +13,7 @@ namespace SimpleHttpServer
     public delegate void HttpRequestDataCallback(HttpClientHandler client, HttpRequest packet);
     public delegate void HttpWebSocketDataCallback(HttpClientHandler client, WebSocketFrame packet);
     public delegate void HttpClientHandlerEvent(EndPoint end, HttpClientHandler client);
+
     public class HttpClientHandler
     {
 
@@ -27,6 +28,10 @@ namespace SimpleHttpServer
         public string ClientInfo
         {
             get { return _client.Client.RemoteEndPoint.ToString(); }
+        }
+        public EndPoint RemoteEndPoint
+        {
+            get { return _client.Client.RemoteEndPoint;  }
         }
         public TcpClient Client
         {
