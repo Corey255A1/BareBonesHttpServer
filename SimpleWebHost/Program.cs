@@ -14,8 +14,8 @@ namespace SimpleWebHost
         static HttpServer Server;
         static string Site = "I'M A BLANK SITE";
         //static Uri Root = new Uri(@"D:\Documents\CodeProjects\Corey255A1.github.io");
-        //static Uri Root = new Uri(@"D:\Documents\CodeProjects\BareBonesHttpServer\ExampleSites\WebSocket");
-        static Uri Root = new Uri(@"D:\Documents\CodeProjects\BareBonesHttpServer\ExampleSites\MultiFile");
+        static Uri Root = new Uri(@"D:\Documents\CodeProjects\BareBonesHttpServer\ExampleSites\WebSocket");
+        //static Uri Root = new Uri(@"D:\Documents\CodeProjects\BareBonesHttpServer\ExampleSites\MultiFile");
 
 
         static void Main(string[] args)
@@ -25,7 +25,7 @@ namespace SimpleWebHost
             //byte[] hash = s.ComputeHash(System.Text.Encoding.UTF8.GetBytes(concat));
             //Console.WriteLine(Convert.ToBase64String(hash)); //s3pPLMBiTxaQ9kYGzzhZRbK+xOo= - Demo From Mozilla
 
-            Server = new HttpServer(80);
+            Server = new HttpServer(11111);
             Site = File.ReadAllText(Root.LocalPath + "\\index.html", System.Text.Encoding.UTF8);
             Server.MessageCallback += Status;
             Server.HttpRequestReceived += ClientRequest;

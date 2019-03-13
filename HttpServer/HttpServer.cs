@@ -44,6 +44,7 @@ namespace SimpleHttpServer
                         httpc.WebSocketDataReceived += HttpWebSocketDataReceived;
                         httpc.ClientDisconnected += ClientDisconnected;
                         _clients[client.Client.RemoteEndPoint]=httpc;
+                        httpc.BeginReadData(); // Silly me was trying to do the read data before the callback was registered
                         Message(string.Format($"{httpc.ClientInfo} has connected"));
                     }
                 }

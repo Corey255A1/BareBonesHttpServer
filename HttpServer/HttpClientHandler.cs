@@ -45,31 +45,36 @@ namespace SimpleHttpServer
         {
             _client = c;
             _stream = c.GetStream();
-            BeginReadData();
         }
 
-        private async void BeginReadData()
+        public async void BeginReadData()
         {
             try
             {
-                int bytesread = await _stream.ReadAsync(_buffer, 0, BUFFERSIZE);
-                while (bytesread > 0)
+                
+                while (true)
                 {
-                    
-                    if (!this.WebSocketUpgrade)
+                    int bytesread = await _stream.ReadAsync(_buffer, 0, BUFFERSIZE);
+                    if (bytesread > 0)
                     {
-                        string msg = System.Text.Encoding.UTF8.GetString(_buffer);
-                        HttpRequest h = new HttpRequest(msg);
-                        HttpRequestReceived?.Invoke(this, h);
+                        if (!this.WebSocketUpgrade)
+                        {
+                            string msg = System.Text.Encoding.UTF8.GetString(_buffer);
+                            HttpRequest h = new HttpRequest(msg);
+                            HttpRequestReceived?.Invoke(this, h);
+                        }
+                        else
+                        {
+                            //Not handling Multiple Frames worth of data...
+                            WebSocketFrame frame = new WebSocketFrame(_buffer);
+                            WebSocketDataReceived?.Invoke(this, frame);
+                            //Console.WriteLine(Encoding.UTF8.GetString(frame.Payload));
+                        }
                     }
                     else
                     {
-                        //Not handling Multiple Frames worth of data...
-                        WebSocketFrame frame = new WebSocketFrame(_buffer);
-                        WebSocketDataReceived?.Invoke(this, frame);
-                        //Console.WriteLine(Encoding.UTF8.GetString(frame.Payload));
+                        break;
                     }
-                    bytesread = await _stream.ReadAsync(_buffer, 0, BUFFERSIZE);
                 }
             }
             catch
