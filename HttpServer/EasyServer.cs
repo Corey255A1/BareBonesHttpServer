@@ -104,7 +104,7 @@ namespace SimpleHttpServer
                         //false.This method also returns false if path is null, an invalid path, or a zero - length string.
                         //If the caller does not have sufficient permissions to read the specified file, 
                         //no exception is thrown and the method returns false regardless of the existence of path
-                        if (File.Exists(requestedfile.LocalPath))
+                        if (File.Exists(requestedfile.LocalPath)) //Doesn't work in UWP.
                         {
                             string mime = HttpTools.GetFileMimeType(uri);
                             byte[] data = File.ReadAllBytes(requestedfile.LocalPath);
