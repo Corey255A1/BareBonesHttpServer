@@ -16,17 +16,17 @@ namespace SimpleHttpServer
     {
         private HttpServer _server;
         private int _port;
-        private Dictionary<string, Func<HttpRequestHandler>> _responseHandlers = new Dictionary<string, Func<HttpRequestHandler>>();
+        private Dictionary<string, HttpRequestHandler> _responseHandlers = new Dictionary<string, HttpRequestHandler>();
 
         public HttpClientHandlerEvent WebSocketClientUpgraded;
         public HttpWebSocketDataCallback WebSocketDataReceived;
-
+        public HttpClientStatusUpdate HttpClientDisconnected;
         private Uri _root;
         public string Root
         {
             get
             {
-                return _root != null ? _root.LocalPath : "";
+                return _root!=null?_root.LocalPath:"";
             }
             set
             {
@@ -43,10 +43,18 @@ namespace SimpleHttpServer
             this._server.MessageCallback += Status;
             this._server.HttpRequestReceived += ClientRequest;
             this._server.HttpWebSocketDataReceived += WebSocketData;
-            this._server.StartListening();
+            this._server.HttpClientDisconnected += HttpClientDisconnected;
+            System.Threading.Tasks.Task.Run(new Action(this._server.StartListening));
+        }
+        public void Stop()
+        {
+            if(this._server!=null)
+            {
+                this._server.Stop();
+            }
         }
 
-        public void AddResponseHandler(string uri, Func<HttpRequestHandler> handler)
+        public void AddResponseHandler(string uri, HttpRequestHandler handler)
         {
             if(_responseHandlers.ContainsKey(uri))
             {
@@ -55,6 +63,13 @@ namespace SimpleHttpServer
             else
             {
                 _responseHandlers.Add(uri, handler);
+            }
+        }
+        public void RemoveResponseHandler(string uri)
+        {
+            if (_responseHandlers.ContainsKey(uri))
+            {
+                _responseHandlers.Remove(uri);
             }
         }
 
@@ -74,6 +89,7 @@ namespace SimpleHttpServer
         private void ClientRequest(HttpClientHandler client, HttpRequest req)
         {
             HttpResponse resp = null;
+            //System.Diagnostics.Debug.WriteLine("Doing Callback");
             if (req["Request"] == "GET")
             {
                 if (req.ContainsKey("Sec-WebSocket-Key"))
@@ -83,38 +99,40 @@ namespace SimpleHttpServer
                     resp.AddProperty("Connection", "Upgrade");
                     resp.AddProperty("Sec-WebSocket-Accept", HttpTools.ComputeWebSocketKeyHash(req["Sec-WebSocket-Key"]));
                     client.UpgradeToWebsocket();
-                    WebSocketClientUpgraded?.Invoke(client.RemoteEndPoint, client);
+                    client.Send(resp);
+                    WebSocketClientUpgraded?.Invoke(client);
+                    return;
                 }
                 else
                 {
                     string uri = req["URI"];
                     if (_responseHandlers.ContainsKey(uri))
                     {
-                        var handlerdata = _responseHandlers[uri]();
+                        var handlerdata = _responseHandlers[uri];
                         resp = new HttpResponse("HTTP/1.1", "200", "OK");
                         resp.AddProperty("Date", DateTime.Now.ToShortDateString());
                         resp.AddProperty("Server", "WunderVision");
                         resp.AddProperty("Content-Type", handlerdata.Mime);
                         resp.SetData(handlerdata.Data);
                     }
-                    else if (this.Root != null && this.Root != "")
-                    {
-                        Uri requestedfile = new Uri(Root + uri);
-                        //true if the caller has the required permissions and path contains the name of an existing file; otherwise, 
-                        //false.This method also returns false if path is null, an invalid path, or a zero - length string.
-                        //If the caller does not have sufficient permissions to read the specified file, 
-                        //no exception is thrown and the method returns false regardless of the existence of path
-                        if (File.Exists(requestedfile.LocalPath)) //Doesn't work in UWP.
-                        {
-                            string mime = HttpTools.GetFileMimeType(uri);
-                            byte[] data = File.ReadAllBytes(requestedfile.LocalPath);
-                            resp = new HttpResponse("HTTP/1.1", "200", "OK");
-                            resp.AddProperty("Date", DateTime.Now.ToShortDateString());
-                            resp.AddProperty("Server", "WunderVision");
-                            resp.AddProperty("Content-Type", mime);
-                            resp.SetData(data);
-                        }
-                    }
+                    //else if (this.Root != null && this.Root != "" && this.Responder!=null)
+                    //{
+                        //UWP Doesn't Like using File Reader                        //Uri requestedfile = new Uri(_root + uri);
+                        ////true if the caller has the required permissions and path contains the name of an existing file; otherwise, 
+                        ////false.This method also returns false if path is null, an invalid path, or a zero - length string.
+                        ////If the caller does not have sufficient permissions to read the specified file, 
+                        ////no exception is thrown and the method returns false regardless of the existence of path
+                        //if (File.Exists(requestedfile.LocalPath))
+                        //{
+                        //    string mime = HttpTools.GetFileMimeType(uri);
+                        //    byte[] data = File.ReadAllBytes(requestedfile.LocalPath);
+                        //    resp = new HttpResponse("HTTP/1.1", "200", "OK");
+                        //    resp.AddProperty("Date", DateTime.Now.ToShortDateString());
+                        //    resp.AddProperty("Server", "WunderVision");
+                        //    resp.AddProperty("Content-Type", mime);
+                        //    resp.SetData(data);
+                        //}
+                    //}
                 }                
             }
             if (resp == null)

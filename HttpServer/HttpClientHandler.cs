@@ -12,7 +12,7 @@ namespace SimpleHttpServer
 {
     public delegate void HttpRequestDataCallback(HttpClientHandler client, HttpRequest packet);
     public delegate void HttpWebSocketDataCallback(HttpClientHandler client, WebSocketFrame packet);
-    public delegate void HttpClientHandlerEvent(EndPoint end, HttpClientHandler client);
+    public delegate void HttpClientHandlerEvent(HttpClientHandler client);
 
     public class HttpClientHandler
     {
@@ -33,6 +33,10 @@ namespace SimpleHttpServer
         {
             get { return _client.Client.RemoteEndPoint;  }
         }
+        public string IPAddress
+        {
+            get { return ((IPEndPoint)_client.Client.RemoteEndPoint).Address.ToString(); }
+        }
         public TcpClient Client
         {
             get { return _client;  }
@@ -45,21 +49,23 @@ namespace SimpleHttpServer
         {
             _client = c;
             _stream = c.GetStream();
+            //System.Diagnostics.Debug.WriteLine("Creating Client");
         }
 
         public async void BeginReadData()
         {
             try
             {
-                
-                while (true)
+                while(true)
                 {
                     int bytesread = await _stream.ReadAsync(_buffer, 0, BUFFERSIZE);
                     if (bytesread > 0)
                     {
+
                         if (!this.WebSocketUpgrade)
                         {
                             string msg = System.Text.Encoding.UTF8.GetString(_buffer);
+                            //System.Diagnostics.Debug.WriteLine(msg);
                             HttpRequest h = new HttpRequest(msg);
                             HttpRequestReceived?.Invoke(this, h);
                         }
@@ -73,20 +79,37 @@ namespace SimpleHttpServer
                     }
                     else
                     {
+                        //System.Diagnostics.Debug.WriteLine("Zero Bytes");
                         break;
                     }
                 }
             }
-            catch
+            catch(Exception ex)
             {
-                Console.WriteLine("Client Read Aborted");
+                Console.WriteLine("Client Read Aborted " + ex.ToString());
             }
             Console.WriteLine("DONE");
-            ClientDisconnected?.Invoke(_client.Client.RemoteEndPoint, this);
+            ClientDisconnected?.Invoke(this);
         }
         public void UpgradeToWebsocket()
         {
             this.WebSocketUpgrade = true;
+        }
+        public void SendAsync(string text)
+        {
+            this.SendAsync(System.Text.Encoding.UTF8.GetBytes(text));
+        }
+        public void SendAsync(WebSocketFrame ws)
+        {
+            this.SendAsync(ws.GetBytes());
+        }
+        public void SendAsync(byte[] bytes)
+        {
+            //System.Diagnostics.Debug.WriteLine("Sending Data");
+            if (this._client.Connected && this._stream.CanWrite)
+            {
+                this._stream.WriteAsync(bytes, 0, bytes.Length);
+            }
         }
         public void Send(string text)
         {
@@ -94,7 +117,11 @@ namespace SimpleHttpServer
         }
         public void Send(byte[] bytes)
         {
-            this._stream.Write(bytes, 0, bytes.Length);
+            //System.Diagnostics.Debug.WriteLine("Sending Data");
+            if (this._client.Connected && this._stream.CanWrite)
+            {
+                this._stream.Write(bytes, 0, bytes.Length);
+            }
         }
         public void Send(WebSocketFrame ws)
         {

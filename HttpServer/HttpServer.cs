@@ -9,13 +9,14 @@ using System.Collections.Concurrent;
 namespace SimpleHttpServer
 {
     public delegate void HttpServerMessageCallback(HttpServer o, string msg);
-    public delegate bool HttpClientStatusUpdate(TcpClient t);
+    public delegate bool TcpClientStatusUpdate(TcpClient t);
+    public delegate void HttpClientStatusUpdate(HttpClientHandler t);
     public class HttpServer
     {
         public HttpServerMessageCallback MessageCallback;
         public HttpRequestDataCallback HttpRequestReceived;
         public HttpWebSocketDataCallback HttpWebSocketDataReceived;
-        public HttpClientStatusUpdate HttpNewClientConnected;
+        public TcpClientStatusUpdate HttpNewClientConnected;
         public HttpClientStatusUpdate HttpClientDisconnected;
         private void Message(string msg) { MessageCallback?.Invoke(this, msg); }
         TcpListener _server;
@@ -44,7 +45,7 @@ namespace SimpleHttpServer
                         httpc.WebSocketDataReceived += HttpWebSocketDataReceived;
                         httpc.ClientDisconnected += ClientDisconnected;
                         _clients[client.Client.RemoteEndPoint]=httpc;
-                        httpc.BeginReadData(); // Silly me was trying to do the read data before the callback was registered
+                        httpc.BeginReadData();
                         Message(string.Format($"{httpc.ClientInfo} has connected"));
                     }
                 }
@@ -65,14 +66,14 @@ namespace SimpleHttpServer
             Message("Server Stopped");
         }
 
-        public void ClientDisconnected(EndPoint p, HttpClientHandler client)
+        public void ClientDisconnected(HttpClientHandler client)
         {
             if(_running)
             {
                 HttpClientHandler tmp;
-                if (_clients.TryRemove(p, out tmp))
+                if (_clients.TryRemove(client.RemoteEndPoint, out tmp))
                 {
-                    HttpClientDisconnected?.Invoke(tmp.Client);
+                    HttpClientDisconnected?.Invoke(tmp);
                     Message(string.Format($"{tmp.ClientInfo} has disconnected"));
                 }
             }
